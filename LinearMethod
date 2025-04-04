@@ -1,0 +1,72 @@
+// USING SIMPLE CALCULATION FINDING SOC AND VOLTAGE 
+// CODE
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Adjust 0x27 if needed
+
+#define ADC_PIN 34
+const float voltageDividerFactor = 2.0;
+
+float voltageToSoC(float voltage) {
+  if (voltage >= 4.20) return 100;
+  else if (voltage >= 4.15) return 95;
+  else if (voltage >= 4.10) return 90;
+  else if (voltage >= 4.05) return 85;
+  else if (voltage >= 4.00) return 80;
+  else if (voltage >= 3.95) return 75;
+  else if (voltage >= 3.90) return 70;
+  else if (voltage >= 3.85) return 65;
+  else if (voltage >= 3.80) return 60;
+  else if (voltage >= 3.75) return 55;
+  else if (voltage >= 3.70) return 50;
+  else if (voltage >= 3.65) return 45;
+  else if (voltage >= 3.60) return 40;
+  else if (voltage >= 3.55) return 35;
+  else if (voltage >= 3.50) return 30;
+  else if (voltage >= 3.45) return 25;
+  else if (voltage >= 3.40) return 20;
+  else if (voltage >= 3.35) return 15;
+  else if (voltage >= 3.30) return 10;
+  else if (voltage >= 3.20) return 5;
+  else return 0;
+}
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+  lcd.begin();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Battery Monitor");
+  delay(2000);
+}
+
+void loop() {
+  int rawADC = analogRead(ADC_PIN);
+  float adcVoltage = rawADC * (3.3 / 4095.0);
+  float batteryVoltage = adcVoltage * voltageDividerFactor;
+  float soc = voltageToSoC(batteryVoltage);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("V: ");
+  lcd.print(batteryVoltage, 2);
+  lcd.print("V");
+
+  lcd.setCursor(9, 0);
+  lcd.print("SoC:");
+  lcd.print((int)soc);
+  lcd.print("%");
+
+  if (batteryVoltage > 4.25) {
+    lcd.setCursor(0, 1);
+    lcd.print("OVERVOLTAGE!!!");
+  } else {
+    lcd.setCursor(0, 1);
+    lcd.print("Status: Normal ");
+  }
+
+  delay(1000);
+}
