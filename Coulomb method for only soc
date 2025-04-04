@@ -1,0 +1,65 @@
+// using coulomb method finding Soc only
+
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+#include <LiquidCrystal_I2C.h>
+
+Adafruit_INA219 ina219;                         // Create INA219 object
+LiquidCrystal_I2C lcd(0x27, 16, 2);             // LCD I2C address, cols, rows
+
+// 🪫 Battery properties
+const float batteryCapacity = 2200.0;           // in mAh (example)
+float soc = 100.0;                              // Starting with 100% battery
+
+unsigned long lastTime = 0;                     // Time tracking for integration
+
+void setup() {
+  Serial.begin(115200);
+  ina219.begin();                               // Start INA219 sensor
+  lcd.begin();                                  // Start LCD
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Battery Monitor");
+  delay(2000);
+  lastTime = millis();                          // Initial timestamp
+}
+
+void loop() {
+  // 1️⃣ Get current time and calculate time delta
+  unsigned long currentTime = millis();
+  float deltaTimeHr = (currentTime - lastTime) / 3600000.0; // ms → hr
+  lastTime = currentTime;
+
+  // 2️⃣ Read current (mA) and voltage (V)
+  float current_mA = ina219.getCurrent_mA();    // +ve = charging, -ve = discharging
+  float voltage = ina219.getBusVoltage_V();     // Battery voltage
+
+  // 3️⃣ Calculate charge moved since last reading
+  float deltaCharge_mAh = current_mA * deltaTimeHr;
+
+  // 4️⃣ Update SoC using Coulomb Counting
+  soc += (deltaCharge_mAh / batteryCapacity) * 100.0;
+  soc = constrain(soc, 0.0, 100.0);             // Clamp SoC to 0–100%
+
+  // 5️⃣ Print to Serial
+  Serial.print("Voltage: "); Serial.print(voltage); Serial.print(" V, ");
+  Serial.print("Current: "); Serial.print(current_mA); Serial.print(" mA, ");
+  Serial.print("SoC: "); Serial.print(soc); Serial.println(" %");
+
+  // 6️⃣ Show on LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("V:"); lcd.print(voltage, 2); lcd.print(" SoC:");
+  lcd.print((int)soc); lcd.print("%");
+
+  lcd.setCursor(0, 1);
+  if (current_mA >= 0)
+    lcd.print("Charging ");
+  else
+    lcd.print("Discharge ");
+    
+  lcd.print(abs(current_mA), 0); lcd.print("mA");
+
+  delay(1000);
+}
