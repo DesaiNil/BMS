@@ -1,0 +1,58 @@
+#include <LiquidCrystal.h>  // Include the LiquidCrystal library
+
+// Define the pins for the LCD
+const int rs = 12; // Register Select pin
+const int en = 11; // Enable pin
+const int d4 = 5;  // Data pin 4
+const int d5 = 4;  // Data pin 5
+const int d6 = 3;  // Data pin 6
+const int d7 = 2;  // Data pin 7
+
+// Initialize the LCD with the corresponding pins
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+const int batteryPin = A0; // Pin connected to the voltage divider
+const float V_FULL = 4.2; // Voltage at 100%
+const float V_EMPTY = 3.5; // Voltage at 0%
+const float DIVIDER_RATIO = 0.5; // R2 / (R1 + R2) for equal resistors
+
+void setup() {
+  lcd.begin(16, 2);  // Initialize the LCD with 16 columns and 2 rows
+}
+
+void loop() {
+  // Read the analog value from the battery pin
+  int sensorValue = analogRead(batteryPin);
+  
+  // Convert the analog value to voltage
+  float voltage = sensorValue * (5.0 / 1023.0) * (1 / DIVIDER_RATIO); // Adjust for divider
+  
+  // Calculate battery percentage
+  float percentage = mapVoltageToPercentage(voltage);
+  
+  // Print the voltage and percentage on the LCD
+  lcd.clear(); // Clear the LCD
+  lcd.setCursor(0, 0); // Set cursor to the first row
+  lcd.print("Voltage: ");
+  lcd.print(voltage, 2); // Print voltage with 2 decimal places
+  lcd.print(" V");
+
+  lcd.setCursor(0, 1); // Set cursor to the second row
+  lcd.print("Battery: ");
+  lcd.print(percentage, 2); // Print percentage with 2 decimal places
+  lcd.print("%");
+  
+  delay(1000); // Delay for a second before the next reading
+}
+
+float mapVoltageToPercentage(float voltage) {
+  // Clamp the voltage to the known range
+  if (voltage >= V_FULL) {
+    return 100.0;
+  } else if (voltage <= V_EMPTY) {
+    return 0.0;
+  } else {
+    // Linearly map voltage between V_EMPTY and V_FULL to percentage
+    return (voltage - V_EMPTY) / (V_FULL - V_EMPTY) * 100.0;
+  }
+}
