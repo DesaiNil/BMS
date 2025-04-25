@@ -1,0 +1,33 @@
+float percentage = mapVoltageToPercentage(voltage);
+  
+  // Print the voltage and percentage on the LCD
+  lcd.clear(); // Clear the LCD
+  lcd.setCursor(0, 0); // Set cursor to the first row
+  lcd.print("Voltage: ");
+  lcd.print(voltage, 2); // Print voltage with 2 decimal places
+  lcd.print(" V");
+
+//  lcd.setCursor(0, 1); // Set cursor to the second row
+//  lcd.print("Battery: ");
+//  lcd.print(percentage, 2); // Print percentage with 2 decimal places
+//  lcd.print("%");
+//  
+  lcd.setCursor(0, 1);
+  lcd.print("SoC: ");
+  lcd.print(percentage, 2);
+  lcd.print("%");
+
+  delay(1000); // Delay for a second before the next reading
+}
+
+float mapVoltageToPercentage(float voltage) {
+  // Clamp the voltage to the known range
+  if (voltage >= V_FULL) {
+    return 100.0;
+  } else if (voltage <= V_EMPTY) {
+    return 0.0;
+  } else {
+    // Linearly map voltage between V_EMPTY and V_FULL to percentage
+    return (voltage - V_EMPTY) / (V_FULL - V_EMPTY) * 100.0;
+  }
+}
